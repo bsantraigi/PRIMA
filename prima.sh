@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pim-activate — Azure PIM Role Reconciliation Loop
+# PRIMA — Privileged Role Identity Management Agent
 # Activates eligible Azure PIM roles that aren't currently active.
 # Schedules a precise one-shot timer for when roles expire.
 # Designed to be called by a systemd timer every 30 minutes.
 #
-# https://github.com/bsantraigi/pim-activate
+# https://github.com/bsantraigi/PRIMA
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pim-activate"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/prima"
 COOLDOWN_FILE="$STATE_DIR/cooldown.json"
-LOG_PREFIX="[pim-activate]"
+LOG_PREFIX="[prima]"
 COOLDOWN_SECONDS=600  # 10 minutes — don't re-request activation within this window
 JUSTIFICATION="${PIM_JUSTIFICATION:-Work}"
 ACTIVATION_DURATION="${PIM_DURATION:-8 hours}"
@@ -143,13 +143,13 @@ if [[ "$missing_count" -eq 0 ]]; then
         fi
 
         # Cancel any existing one-shot before scheduling
-        systemctl --user stop pim-activate-oneshot.timer 2>/dev/null || true
+        systemctl --user stop prima-oneshot.timer 2>/dev/null || true
 
         log "Scheduling one-shot in ${oneshot_delay}s (expiry + ${ONESHOT_BUFFER_SECONDS}s buffer)..."
         systemd-run --user --on-active="${oneshot_delay}s" \
-            --unit=pim-activate-oneshot \
-            --description="PIM role re-activation after expiry" \
-            "$SCRIPT_DIR/pim-activate.sh" 2>&1 || {
+            --unit=prima-oneshot \
+            --description="PRIMA role re-activation after expiry" \
+            "$SCRIPT_DIR/prima.sh" 2>&1 || {
             log_err "Failed to schedule one-shot timer"
         }
     else

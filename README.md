@@ -1,4 +1,4 @@
-# pim-activate
+# PRIMA — Privileged Role Identity Management Agent
 
 Automatically keep your Azure PIM (Privileged Identity Management) roles activated. Runs as a systemd user timer, checks every 30 minutes, and re-activates roles as they expire — no manual clicks in the Azure portal.
 
@@ -31,9 +31,9 @@ You must be logged into Azure CLI before installing: `az login`.
 ## Install
 
 ```bash
-git clone https://github.com/bsantraigi/pim-activate.git
-cd pim-activate
-./manage.sh install
+git clone https://github.com/bsantraigi/PRIMA.git
+cd PRIMA
+./prima install
 ```
 
 This will:
@@ -43,35 +43,35 @@ This will:
 - Enable and start the 30-minute heartbeat timer
 - Enable linger (`loginctl enable-linger`) so the timer runs even without an active login session
 
-The service file is **generated, not checked in** — it contains absolute paths specific to where you cloned the repo. If you move the repo, run `./manage.sh install` again.
+The service file is **generated, not checked in** — it contains absolute paths specific to where you cloned the repo. If you move the repo, run `./prima install` again.
 
 ## Usage
 
 ```bash
-./manage.sh install     # First-time setup (or after moving the repo)
-./manage.sh status      # Show timer, last run, one-shot, and cooldown state
-./manage.sh run         # Run activation manually right now
-./manage.sh logs        # Show recent journal logs (last 50 entries)
-./manage.sh disable     # Pause the timer (roles will expire naturally)
-./manage.sh enable      # Resume the timer
-./manage.sh uninstall   # Stop timers, remove unit files
+./prima install     # First-time setup (or after moving the repo)
+./prima status      # Show timer, last run, one-shot, and cooldown state
+./prima run         # Run activation manually right now
+./prima logs        # Show recent journal logs (last 50 entries)
+./prima disable     # Pause the timer (roles will expire naturally)
+./prima enable      # Resume the timer
+./prima uninstall   # Stop timers, remove unit files
 ```
 
 ### Checking logs
 
 ```bash
-# Via manage.sh
-./manage.sh logs
+# Via prima
+./prima logs
 
 # Or directly via journalctl
-journalctl --user -u pim-activate.service -f          # follow live
-journalctl --user -u pim-activate.service --since today
+journalctl --user -u prima.service -f          # follow live
+journalctl --user -u prima.service --since today
 ```
 
 ### Manual one-off activation
 
 ```bash
-./manage.sh run
+./prima run
 ```
 
 This runs the full reconciliation loop once — useful for immediate activation after a fresh `az login` or to test changes.
@@ -98,7 +98,7 @@ To make these permanent for the systemd service, add them to the generated servi
                                │ triggers
                                ▼
                     ┌─────────────────────────────┐
-                    │   pim-activate.sh           │
+                    │   prima.sh                  │
                     │   (reconciliation loop)     │
                     └──────────┬──────────────────┘
                                │
@@ -122,7 +122,7 @@ To make these permanent for the systemd service, add them to the generated servi
      ┌──────────────────┐
      │  cooldown.json   │  (per-role timestamps)
      │  ~/.local/state/ │
-     │  pim-activate/   │
+     │  prima/          │
      └──────────────────┘
 ```
 
@@ -130,11 +130,11 @@ To make these permanent for the systemd service, add them to the generated servi
 
 | File | Description |
 |------|-------------|
-| `pim-activate.sh` | Main reconciliation script (~130 lines of bash) |
-| `pim-activate.timer` | Systemd timer unit (static — no machine-specific paths) |
-| `manage.sh` | Install/uninstall/lifecycle management |
-| `~/.config/systemd/user/pim-activate.service` | Generated at install time with correct paths |
-| `~/.local/state/pim-activate/cooldown.json` | Per-role cooldown timestamps (safe to delete) |
+| `prima.sh` | Main reconciliation script (~130 lines of bash) |
+| `prima.timer` | Systemd timer unit (static — no machine-specific paths) |
+| `prima` | CLI entrypoint — install/uninstall/lifecycle management |
+| `~/.config/systemd/user/prima.service` | Generated at install time with correct paths |
+| `~/.local/state/prima/cooldown.json` | Per-role cooldown timestamps (safe to delete) |
 
 ### API call budget per heartbeat
 
@@ -155,15 +155,15 @@ When all eligible roles are active and the earliest expiry is within 35 minutes 
 
 ## Troubleshooting
 
-**`az-pim not found in PATH`** — The systemd service sets its own `PATH`. If `az-pim` is installed somewhere unusual, update the `Environment=PATH=...` line in `~/.config/systemd/user/pim-activate.service`.
+**`az-pim not found in PATH`** — The systemd service sets its own `PATH`. If `az-pim` is installed somewhere unusual, update the `Environment=PATH=...` line in `~/.config/systemd/user/prima.service`.
 
 **`az CLI not logged in`** — Run `az login` in your terminal. The systemd service uses the same credential cache (typically `~/.azure/`).
 
 **Timer not running after reboot** — Check `loginctl show-user $USER | grep Linger`. If `Linger=no`, run `sudo loginctl enable-linger $USER`.
 
-**Roles not activating** — Check `./manage.sh logs` for errors. Common causes: expired `az` token, `az-pim` version mismatch, Azure throttling.
+**Roles not activating** — Check `./prima logs` for errors. Common causes: expired `az` token, `az-pim` version mismatch, Azure throttling.
 
-**Want to change the heartbeat interval?** — Edit `OnUnitActiveSec=30min` in `pim-activate.timer`, then `./manage.sh install` to reload.
+**Want to change the heartbeat interval?** — Edit `OnUnitActiveSec=30min` in `prima.timer`, then `./prima install` to reload.
 
 ## License
 

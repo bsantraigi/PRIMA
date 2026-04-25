@@ -1,5 +1,5 @@
 [Unit]
-Description=Heartbeat timer for Azure PIM role activation
+Description=PRIMA — Heartbeat timer for Azure PIM role activation
 
 [Timer]
 OnBootSec=2min

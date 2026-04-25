@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pim-activate — Service Manager
-# Usage: ./manage.sh {install|uninstall|enable|disable|status|run|logs}
+# PRIMA — Privileged Role Identity Management Agent
+# Usage: ./prima {install|uninstall|enable|disable|status|run|logs}
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SERVICE_NAME="pim-activate"
+SERVICE_NAME="prima"
 UNIT_DIR="${HOME}/.config/systemd/user"
 ACCOUNT_PREFIX="${PIM_ACCOUNT_PREFIX:-sc-}"
 
@@ -61,10 +61,10 @@ check_prerequisites() {
 }
 
 generate_service_file() {
-    local script_path="$SCRIPT_DIR/pim-activate.sh"
+    local script_path="$SCRIPT_DIR/prima.sh"
     cat > "$UNIT_DIR/${SERVICE_NAME}.service" <<EOF
 [Unit]
-Description=Activate Azure PIM eligible roles
+Description=PRIMA — Activate Azure PIM eligible roles
 Wants=network-online.target
 
 [Service]
@@ -77,10 +77,10 @@ EOF
 do_install() {
     check_prerequisites
 
-    bold "Installing pim-activate..."
+    bold "Installing PRIMA..."
 
     mkdir -p "$UNIT_DIR"
-    chmod +x "$SCRIPT_DIR/pim-activate.sh"
+    chmod +x "$SCRIPT_DIR/prima.sh"
 
     # Generate service file with correct paths for this machine
     generate_service_file
@@ -105,17 +105,17 @@ do_install() {
 }
 
 do_uninstall() {
-    bold "Uninstalling pim-activate..."
+    bold "Uninstalling PRIMA..."
 
     systemctl --user stop "${SERVICE_NAME}.timer" 2>/dev/null || true
     systemctl --user disable "${SERVICE_NAME}.timer" 2>/dev/null || true
-    systemctl --user stop pim-activate-oneshot.timer 2>/dev/null || true
+    systemctl --user stop prima-oneshot.timer 2>/dev/null || true
 
     rm -f "$UNIT_DIR/${SERVICE_NAME}.service" "$UNIT_DIR/${SERVICE_NAME}.timer"
     systemctl --user daemon-reload
 
     green "Uninstalled. Unit files removed."
-    echo "State directory preserved at: ${XDG_STATE_HOME:-$HOME/.local/state}/pim-activate/"
+    echo "State directory preserved at: ${XDG_STATE_HOME:-$HOME/.local/state}/prima/"
 }
 
 do_enable() {
@@ -127,7 +127,7 @@ do_enable() {
 
 do_disable() {
     systemctl --user stop "${SERVICE_NAME}.timer"
-    systemctl --user stop pim-activate-oneshot.timer 2>/dev/null || true
+    systemctl --user stop prima-oneshot.timer 2>/dev/null || true
     green "Timer disabled. Roles will expire naturally."
 }
 
@@ -154,10 +154,10 @@ do_status() {
     systemctl --user status "${SERVICE_NAME}.service" --no-pager 2>/dev/null || echo "Service not installed."
     echo ""
     bold "=== One-shot ==="
-    systemctl --user status pim-activate-oneshot.timer --no-pager 2>/dev/null || echo "No one-shot scheduled."
+    systemctl --user status prima-oneshot.timer --no-pager 2>/dev/null || echo "No one-shot scheduled."
     echo ""
     bold "=== Cooldown State ==="
-    local cooldown_file="${XDG_STATE_HOME:-$HOME/.local/state}/pim-activate/cooldown.json"
+    local cooldown_file="${XDG_STATE_HOME:-$HOME/.local/state}/prima/cooldown.json"
     if [[ -f "$cooldown_file" ]]; then
         jq . "$cooldown_file"
     else
@@ -167,8 +167,8 @@ do_status() {
 
 do_run() {
     require_service_account
-    bold "Running PIM activation manually..."
-    "$SCRIPT_DIR/pim-activate.sh"
+    bold "Running PRIMA activation..."
+    "$SCRIPT_DIR/prima.sh"
 }
 
 do_logs() {
