@@ -13,7 +13,7 @@ Uses a **reconciliation loop** pattern (inspired by Kubernetes controllers): obs
 1. **Observe** — Fetches eligible roles (`az-pim list`) and active roles (`az-pim list --active`)
 2. **Diff** — Computes which eligible roles are missing from the active set
 3. **Act** — Activates missing roles, respecting a per-role cooldown to avoid hammering Azure during its async provisioning window (5–7 min)
-4. **Schedule** — Queries the Azure REST API for exact role expiration timestamps and schedules a one-shot timer to fire 2 minutes after the earliest expiry
+4. **Schedule** — Queries the Azure REST API for exact role expiration timestamps and schedules a one-shot timer to fire 5 minutes after the earliest expiry
 
 Key design choice: **never explicitly deactivates roles**. Azure PIM deactivation is asynchronous and takes 5–7 minutes of unpredictable delay. Attempting deactivate-then-activate creates a race condition with a gap where roles are neither active nor fully deactivated. Instead, roles are allowed to expire naturally, then re-activated cleanly.
 
@@ -91,14 +91,14 @@ To make these permanent for the systemd service, add them to the generated servi
 
 ```
                     ┌─────────────────────────────┐
-                    │   systemd timer (30 min)     │
-                    │   + one-shot at expiry+2min  │
+                    │   systemd timer (30 min)    │
+                    │   + one-shot at expiry+2min │
                     └──────────┬──────────────────┘
                                │ triggers
                                ▼
                     ┌─────────────────────────────┐
-                    │   pim-activate.sh            │
-                    │   (reconciliation loop)      │
+                    │   pim-activate.sh           │
+                    │   (reconciliation loop)     │
                     └──────────┬──────────────────┘
                                │
               ┌────────────────┼────────────────┐
@@ -150,7 +150,7 @@ The cooldown file tracks when each role was last requested for activation. This 
 
 ### One-shot timer
 
-When all eligible roles are active and the earliest expiry is within 35 minutes (the next heartbeat might miss it), the script schedules a transient systemd timer via `systemd-run --user --on-active=Xs`. This fires at expiry + 2 minutes, runs the same reconciliation script, and catches the expired roles immediately. If the one-shot misses (reboot, systemd issue), the 30-minute heartbeat catches it as a fallback.
+When all eligible roles are active and the earliest expiry is within 35 minutes (the next heartbeat might miss it), the script schedules a transient systemd timer via `systemd-run --user --on-active=Xs`. This fires at expiry + 5 minutes, runs the same reconciliation script, and catches the expired roles immediately. If the one-shot misses (reboot, systemd issue), the 30-minute heartbeat catches it as a fallback.
 
 ## Troubleshooting
 

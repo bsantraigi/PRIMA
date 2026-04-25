@@ -15,7 +15,7 @@ LOG_PREFIX="[pim-activate]"
 COOLDOWN_SECONDS=600  # 10 minutes — don't re-request activation within this window
 JUSTIFICATION="${PIM_JUSTIFICATION:-Work}"
 ACTIVATION_DURATION="${PIM_DURATION:-8 hours}"
-ONESHOT_BUFFER_SECONDS=120  # schedule one-shot 2 min after expected expiry
+ONESHOT_BUFFER_SECONDS=300  # schedule one-shot 5 min after expected expiry
 HEARTBEAT_SECONDS=1800      # 30 min — must match timer interval
 
 log() { echo "$(date -Iseconds) $LOG_PREFIX $*"; }

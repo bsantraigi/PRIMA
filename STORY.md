@@ -55,7 +55,7 @@ Returns the exact expiration timestamp. Stable, documented API, uses existing `a
 
 ### Iteration 4: Precise wake-up at expiry
 
-With exact expiry known, the script schedules a one-shot systemd timer (`systemd-run --user --on-active=Xs`) to fire 2 minutes after the earliest role expires. This reduces worst-case re-activation latency from 30 minutes (heartbeat) to ~2 minutes.
+With exact expiry known, the script schedules a one-shot systemd timer (`systemd-run --user --on-active=Xs`) to fire 5 minutes after the earliest role expires. This reduces worst-case re-activation latency from 30 minutes (heartbeat) to ~5 minutes.
 
 The one-shot is belt-and-suspenders: if it fails (reboot, systemd hiccup), the 30-minute heartbeat catches it as fallback.
 
