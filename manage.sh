@@ -11,6 +11,31 @@ UNIT_DIR="${HOME}/.config/systemd/user"
 red()   { echo -e "\033[31m$*\033[0m"; }
 green() { echo -e "\033[32m$*\033[0m"; }
 bold()  { echo -e "\033[1m$*\033[0m"; }
+yellow(){ echo -e "\033[33m$*\033[0m"; }
+
+get_az_user() {
+    az account show --query user.name -o tsv 2>/dev/null || echo ""
+}
+
+require_service_account() {
+    local user
+    user=$(get_az_user)
+    if [[ -z "$user" ]]; then
+        red "Azure CLI not logged in. Run: az login"
+        exit 1
+    fi
+    if [[ "$user" != sc-* ]]; then
+        echo ""
+        red "╔══════════════════════════════════════════════════════════════╗"
+        red "║  WARNING: Not a service account!                             ║"
+        red "║  Logged in as: $user                     ║"
+        red "║  This tool must be used with a service account (sc-*).       ║"
+        red "║  Log in with a service account: az login                     ║"
+        red "╚══════════════════════════════════════════════════════════════╝"
+        echo ""
+        exit 1
+    fi
+}
 
 check_prerequisites() {
     local missing=()
@@ -30,6 +55,8 @@ check_prerequisites() {
         red "Azure CLI not logged in. Run: az login"
         exit 1
     fi
+
+    require_service_account
 }
 
 generate_service_file() {
@@ -91,6 +118,7 @@ do_uninstall() {
 }
 
 do_enable() {
+    require_service_account
     systemctl --user enable --now "${SERVICE_NAME}.timer"
     green "Timer enabled."
     do_status
@@ -103,6 +131,21 @@ do_disable() {
 }
 
 do_status() {
+    bold "=== Azure Account ==="
+    local user
+    user=$(get_az_user)
+    if [[ -z "$user" ]]; then
+        red "Azure CLI not logged in."
+    elif [[ "$user" != sc-* ]]; then
+        red "╔══════════════════════════════════════════════════════════════╗"
+        red "║  WARNING: Not a service account!                             ║"
+        red "║  Logged in as: $user                     ║"
+        red "║  This tool must be used with a service account (sc-*).       ║"
+        red "╚══════════════════════════════════════════════════════════════╝"
+    else
+        green "Logged in as: $user"
+    fi
+    echo ""
     bold "=== Timer ==="
     systemctl --user status "${SERVICE_NAME}.timer" --no-pager 2>/dev/null || echo "Timer not installed."
     echo ""
@@ -122,6 +165,7 @@ do_status() {
 }
 
 do_run() {
+    require_service_account
     bold "Running PIM activation manually..."
     "$SCRIPT_DIR/pim-activate.sh"
 }

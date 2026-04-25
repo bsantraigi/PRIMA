@@ -39,6 +39,14 @@ if ! az account show &>/dev/null; then
     exit 1
 fi
 
+# Verify service account (must start with "sc-")
+az_user=$(az account show --query user.name -o tsv 2>/dev/null)
+if [[ "$az_user" != sc-* ]]; then
+    log_err "Logged in as '$az_user' — not a service account (must start with 'sc-'). Aborting."
+    exit 1
+fi
+log "Authenticated as $az_user"
+
 # --- Fetch eligible and active roles ---
 log "Fetching eligible roles..."
 eligible=$(az-pim list --quiet 2>/dev/null) || { log_err "Failed to list eligible roles"; exit 1; }
