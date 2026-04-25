@@ -31,7 +31,7 @@ You must be logged into Azure CLI before installing: `az login`.
 ## Install
 
 ```bash
-git clone https://github.com/bishal-dce/pim-activate.git
+git clone https://github.com/bsantraigi/pim-activate.git
 cd pim-activate
 ./manage.sh install
 ```
@@ -84,6 +84,7 @@ Environment variables (set in your shell or export before running):
 |----------|---------|-------------|
 | `PIM_JUSTIFICATION` | `Work` | Justification string sent with each activation request |
 | `PIM_DURATION` | `8 hours` | How long to activate roles for (Azure PIM max is typically 8h) |
+| `PIM_ACCOUNT_PREFIX` | `sc-` | Only allow accounts whose UPN starts with this prefix. Set to empty string to disable |
 
 To make these permanent for the systemd service, add them to the generated service file's `Environment=` line after installing.
 
@@ -92,7 +93,7 @@ To make these permanent for the systemd service, add them to the generated servi
 ```
                     ┌─────────────────────────────┐
                     │   systemd timer (30 min)    │
-                    │   + one-shot at expiry+2min │
+                    │   + one-shot at expiry+5min │
                     └──────────┬──────────────────┘
                                │ triggers
                                ▼

@@ -6,7 +6,7 @@ set -euo pipefail
 # Schedules a precise one-shot timer for when roles expire.
 # Designed to be called by a systemd timer every 30 minutes.
 #
-# https://github.com/bishal-dce/pim-activate
+# https://github.com/bsantraigi/pim-activate
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/pim-activate"
@@ -15,6 +15,7 @@ LOG_PREFIX="[pim-activate]"
 COOLDOWN_SECONDS=600  # 10 minutes — don't re-request activation within this window
 JUSTIFICATION="${PIM_JUSTIFICATION:-Work}"
 ACTIVATION_DURATION="${PIM_DURATION:-8 hours}"
+ACCOUNT_PREFIX="${PIM_ACCOUNT_PREFIX:-sc-}"
 ONESHOT_BUFFER_SECONDS=300  # schedule one-shot 5 min after expected expiry
 HEARTBEAT_SECONDS=1800      # 30 min — must match timer interval
 
@@ -39,10 +40,10 @@ if ! az account show &>/dev/null; then
     exit 1
 fi
 
-# Verify service account (must start with "sc-")
+# Verify account prefix if configured
 az_user=$(az account show --query user.name -o tsv 2>/dev/null)
-if [[ "$az_user" != sc-* ]]; then
-    log_err "Logged in as '$az_user' — not a service account (must start with 'sc-'). Aborting."
+if [[ -n "$ACCOUNT_PREFIX" && "$az_user" != "${ACCOUNT_PREFIX}"* ]]; then
+    log_err "Logged in as '$az_user' — expected prefix '$ACCOUNT_PREFIX'. Aborting."
     exit 1
 fi
 log "Authenticated as $az_user"

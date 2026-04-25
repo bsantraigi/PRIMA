@@ -7,6 +7,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVICE_NAME="pim-activate"
 UNIT_DIR="${HOME}/.config/systemd/user"
+ACCOUNT_PREFIX="${PIM_ACCOUNT_PREFIX:-sc-}"
 
 red()   { echo -e "\033[31m$*\033[0m"; }
 green() { echo -e "\033[32m$*\033[0m"; }
@@ -24,13 +25,13 @@ require_service_account() {
         red "Azure CLI not logged in. Run: az login"
         exit 1
     fi
-    if [[ "$user" != sc-* ]]; then
+    if [[ -n "$ACCOUNT_PREFIX" && "$user" != "${ACCOUNT_PREFIX}"* ]]; then
         echo ""
         red "╔══════════════════════════════════════════════════════════════╗"
-        red "║  WARNING: Not a service account!                             ║"
-        red "║  Logged in as: $user                     ║"
-        red "║  This tool must be used with a service account (sc-*).       ║"
-        red "║  Log in with a service account: az login                     ║"
+        red "║  WARNING: Account prefix mismatch!                           ║"
+        red "║  Logged in as: $user"
+        red "║  Expected prefix: ${ACCOUNT_PREFIX}                          ║"
+        red "║  Log in with the correct account: az login                   ║"
         red "╚══════════════════════════════════════════════════════════════╝"
         echo ""
         exit 1
@@ -136,11 +137,11 @@ do_status() {
     user=$(get_az_user)
     if [[ -z "$user" ]]; then
         red "Azure CLI not logged in."
-    elif [[ "$user" != sc-* ]]; then
+    elif [[ -n "$ACCOUNT_PREFIX" && "$user" != "${ACCOUNT_PREFIX}"* ]]; then
         red "╔══════════════════════════════════════════════════════════════╗"
-        red "║  WARNING: Not a service account!                             ║"
-        red "║  Logged in as: $user                     ║"
-        red "║  This tool must be used with a service account (sc-*).       ║"
+        red "║  WARNING: Account prefix mismatch!                           ║"
+        red "║  Logged in as: $user"
+        red "║  Expected prefix: ${ACCOUNT_PREFIX}                          ║"
         red "╚══════════════════════════════════════════════════════════════╝"
     else
         green "Logged in as: $user"
