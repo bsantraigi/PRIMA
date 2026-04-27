@@ -2,9 +2,8 @@
 Description=PRIMA — Heartbeat timer for Azure PIM role activation
 
 [Timer]
-OnBootSec=2min
+OnActiveSec=2min
 OnUnitActiveSec=30min
-Persistent=true
 
 [Install]
 WantedBy=timers.target

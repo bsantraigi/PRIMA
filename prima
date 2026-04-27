@@ -89,7 +89,8 @@ do_install() {
     ln -sf "$SCRIPT_DIR/${SERVICE_NAME}.timer" "$UNIT_DIR/${SERVICE_NAME}.timer"
 
     systemctl --user daemon-reload
-    systemctl --user enable --now "${SERVICE_NAME}.timer"
+    systemctl --user enable "${SERVICE_NAME}.timer"
+    systemctl --user restart "${SERVICE_NAME}.timer"
 
     # Enable linger so timers run without active login session
     if ! loginctl show-user "$USER" 2>/dev/null | grep -q "Linger=yes"; then
